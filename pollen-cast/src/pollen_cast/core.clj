@@ -1,7 +1,14 @@
 (ns pollen-cast.core
-  (:gen-class))
+  (:gen-class)
+  (:require [pollen-cast.api :as api]))
 
-(defn -main
-  "I don't do a whole lot ... yet."
-  [& args]
-  (println "Hello, World!"))
+(defn -main []
+  (println "======================================")
+  (println "         POLLENCAST v1.0")
+  (println "   Pollen Forecast Monitor for Serbia")
+  (println "======================================")
+  (println "\nFetching locations...")
+  (let [locations (api/get-locations)]
+    (doseq [loc locations]
+      (println (:name loc))))
+  (System/exit 0))
