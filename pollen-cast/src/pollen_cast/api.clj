@@ -24,5 +24,9 @@
 
 (defn get-recent-pollen [location-name]
   (let [current-year 2026
-        data (get-pollen-for-location current-year location-name)]
+data (get-pollen-for-location current-year location-name)]
     (take-last 7 data)))
+
+(defn get-latest-pollen [location-name]
+  (last (get-recent-pollen location-name)))
+

@@ -93,6 +93,41 @@
       2 (register)
       0 (do (println "Goodbye!") (System/exit 0)))))
 
+(defn pollen-level [value]
+  (cond
+    (= value 0)   "NONE"
+    (< value 10)  "LOW"
+    (< value 50)  "MEDIUM"
+    (< value 100) "HIGH"
+    :else         "VERY HIGH"))
+
+(defn show-today-pollen [user]
+  (println "\n======================================")
+  (println (str "  TODAY'S POLLEN — " (:city user)))
+  (println "======================================")
+  (let [entry (api/get-latest-pollen (:city user))]
+    (if (nil? entry)
+      (println "No data available.")
+      (do
+        (println (str "Last measurement: " (:date entry)))
+        (println "")
+        (println (format "%-20s %-8s %s" "Species" "Value" "Level"))
+        (println (apply str (repeat 45 "-")))
+        (doseq [species [:POACEAE :AMBROSIA :BETULA :URTICACEAE
+                         :ALNUS :CORYLUS :FRAXINUS :QUERCUS]]
+          (let [value (get entry species 0)]
+            (when (> value 0)
+              (println (format "%-20s %-8s %s"
+                               (name species)
+                               value
+                               (pollen-level value))))))
+        (println "")
+        (println "Your allergens:")
+        (doseq [allergen (:allergy-profile user)]
+          (let [value (get entry allergen 0)]
+            (println (str "  " (name allergen) ": "
+                          value " → " (pollen-level value)))))))))
+
 ;; ---- MAIN MENU ----
 
 (defn main-menu [user]
@@ -108,7 +143,7 @@
     (println "6. Edit profile")
     (println "0. Exit")
     (case (read-int "\n> " #{0 1 2 3 4 5 6})
-      1 (do (println "Coming soon...") (recur))
+      1 (do (show-today-pollen user) (recur))
       2 (do (println "Coming soon...") (recur))
       3 (do (println "Coming soon...") (recur))
       4 (do (println "Coming soon...") (recur))
