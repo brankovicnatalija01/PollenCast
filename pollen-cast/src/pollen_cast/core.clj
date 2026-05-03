@@ -8,7 +8,10 @@
   (println "   Pollen Forecast Monitor for Serbia")
   (println "======================================")
   (println "\nFetching locations...")
-  (let [locations (api/get-locations)]
-    (doseq [loc locations]
-      (println (:name loc))))
+  (println "\nRecent pollen data for Nis:")
+(let [recent (api/get-recent-pollen "НИШ")]
+  (doseq [entry recent]
+    (println (:date entry) 
+             "POACEAE:" (:POACEAE entry)
+             "AMBROSIA:" (:AMBROSIA entry))))
   (System/exit 0))
