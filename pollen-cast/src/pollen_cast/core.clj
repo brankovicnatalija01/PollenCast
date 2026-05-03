@@ -1,7 +1,8 @@
 (ns pollen-cast.core
   (:gen-class)
   (:require [pollen-cast.cli :as cli]
-            [pollen-cast.preprocess :as prep]))
+            [pollen-cast.preprocess :as prep]
+            [pollen-cast.model :as model]))
 
 #_ (defn -main []
   (cli/print-header)
@@ -11,9 +12,6 @@
   (System/exit 0))
 
 (defn -main []
-  (let [windows (prep/prepare-training-data "НИШ")]
-  (println "First window input (day 1):"
-           (take 5 (first (:input (first windows)))))
-  (println "First window output (day 1):"
-           (take 5 (first (:output (first windows))))))
+(println "Input size:" model/input-size)
+(println "Output size:" model/output-size)
   (System/exit 0))
