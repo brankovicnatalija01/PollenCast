@@ -1,6 +1,5 @@
 (ns pollen-cast.api
-  (:require [clj-http.client :as client]
-            [cheshire.core :as json]))
+  (:require [clj-http.client :as client ]))
 
 (def base-url "http://77.46.150.200")
 

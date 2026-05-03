@@ -1,17 +1,10 @@
 (ns pollen-cast.core
   (:gen-class)
-  (:require [pollen-cast.api :as api]))
+  (:require [pollen-cast.cli :as cli]))
 
 (defn -main []
-  (println "======================================")
-  (println "         POLLENCAST v1.0")
-  (println "   Pollen Forecast Monitor for Serbia")
-  (println "======================================")
-  (println "\nFetching locations...")
-  (println "\nRecent pollen data for Nis:")
-(let [recent (api/get-recent-pollen "НИШ")]
-  (doseq [entry recent]
-    (println (:date entry) 
-             "POACEAE:" (:POACEAE entry)
-             "AMBROSIA:" (:AMBROSIA entry))))
+  (cli/print-header)
+  (let [user (cli/auth-menu)]
+    (when user
+      (cli/main-menu user)))
   (System/exit 0))
