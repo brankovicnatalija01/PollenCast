@@ -4,7 +4,7 @@
             [pollen-cast.api :as api]
             [pollen-cast.preprocess :as prep]
             [pollen-cast.model :as model]
-            [pollen-cast.train :as train]
+            [pollen-cast.train :as train] [pollen-cast.persistence :as persist]
             [uncomplicate.diamond.dnn :refer [infer!]]
             [uncomplicate.diamond.tensor :refer [tensor]]
             [uncomplicate.neanderthal.core :refer [transfer!]]))
@@ -38,8 +38,11 @@
   (System/exit 0))
 
 (defn -main []
-  (let [locations (map :name (api/get-locations))]
-    (doseq [loc (take 30 locations)]
-      (let [data (prep/load-training-data loc)]
-        (println (str loc ": " (count data) " records")))))
+  (let [city "НИШ"
+        result (if (persist/model-exists? city)
+                 (do (println "Model found, loading...")
+                     (persist/load-model! city))
+                 (do (println "No model found, training...")
+                     (train/train-model! city 2000)))]
+    (println "Ready!" result))
   (System/exit 0))

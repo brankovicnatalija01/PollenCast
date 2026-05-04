@@ -6,6 +6,7 @@
                  [clj-http "3.12.3"]
                  [cheshire "5.12.0"]
                  [codax/codax "1.4.3"]
+                 [com.taoensso/nippy "3.3.0"]
                  [org.uncomplicate/deep-diamond-base "0.43.0"]
                  [org.uncomplicate/deep-diamond-dnnl "0.43.0"]
                  [org.uncomplicate/neanderthal-base "0.61.0"]

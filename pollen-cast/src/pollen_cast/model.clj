@@ -1,8 +1,9 @@
 (ns pollen-cast.model
   (:require [uncomplicate.diamond.tensor :refer [desc]]
-            [uncomplicate.diamond.dnn :refer [network init!
-                                              fully-connected dropout]]
-            [uncomplicate.diamond.native :refer :all]))
+          [uncomplicate.diamond.dnn :refer [network init!
+                                            fully-connected dropout]]
+          [uncomplicate.diamond.native :refer :all]
+          [clojure.set]))
 
 ;; 14 days x 32 features (26 pollen + 6 cyclic date features)
 (def input-size (* 14 32))
@@ -30,3 +31,34 @@
 ;; Flatten 7 days of output into one vector of 182 floats
 (defn flatten-output [window-output]
   (vec (mapcat identity window-output)))
+
+(def city-display->api
+  {"Beograd - Zeleno Brdo"  "БЕОГРАД - ЗЕЛЕНО БРДО"
+   "Beograd - Novi Beograd" "БЕОГРАД - НОВИ БЕОГРАД"
+   "Kikinda"                "КИКИНДА"
+   "Vrbas"                  "ВРБАС"
+   "Vršac"                  "ВРШАЦ"
+   "Zaječar"                "ЗАЈЕЧАР"
+   "Kragujevac"             "КРАГУЈЕВАЦ"
+   "Kruševac"               "КРУШЕВАЦ"
+   "Niš"                    "НИШ"
+   "Vranje"                 "ВРАЊЕ"
+   "Kraljevo"               "КРАЉЕВО"
+   "Čačak"                  "ЧАЧАК"})
+
+(def city-api->display
+  (clojure.set/map-invert city-display->api))
+
+(def supported-cities
+  ["БЕОГРАД - ЗЕЛЕНО БРДО"
+   "БЕОГРАД - НОВИ БЕОГРАД"
+   "КИКИНДА"
+   "ВРБАС"
+   "ВРШАЦ"
+   "ЗАЈЕЧАР"
+   "КРАГУЈЕВАЦ"
+   "КРУШЕВАЦ"
+   "НИШ"
+   "ВРАЊЕ"
+   "КРАЉЕВО"
+   "ЧАЧАК"])

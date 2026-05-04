@@ -6,7 +6,8 @@
                                               fully-connected dropout]]
             [uncomplicate.diamond.native :refer :all]
             [pollen-cast.preprocess :as prep]
-            [pollen-cast.model :as model]))
+            [pollen-cast.model :as model] 
+            [pollen-cast.persistence :as persist]))
 
 ;; Convert windows to flat float arrays for training
 (defn windows->matrices [windows]
@@ -46,4 +47,5 @@
                         " | RMSE: " (format "%.2f" rmse)
                         " pollen/m³"))))
       (println "Training complete!")
+      (persist/save-model! net location)
       net)))

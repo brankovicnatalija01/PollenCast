@@ -1,6 +1,8 @@
 (ns pollen-cast.cli
   (:require [pollen-cast.data :as data]
-            [pollen-cast.api :as api]))
+            [pollen-cast.api :as api]
+            [pollen-cast.allergens :as allergens]
+            [pollen-cast.model :as model]))
 
 ;; ---- HELPERS ----
 
@@ -29,24 +31,25 @@
 
 (defn select-city []
   (println "\nSelect your city:")
-  (let [locations (api/get-locations)
-        indexed   (map-indexed vector locations)]
-    (doseq [[i loc] indexed]
-      (println (str (inc i) ". " (:name loc))))
-    (let [choice (read-int "\n> " #(and (>= % 1) (<= % (count locations))))]
-      (:name (nth locations (dec choice))))))
+  (let [cities  model/supported-cities
+        indexed (map-indexed vector cities)]
+    (doseq [[i city] indexed]
+      (println (str (inc i) ". " (get model/city-api->display city city))))
+    (let [choice (read-int "\n> " #(and (>= % 1) (<= % (count cities))))]
+      (nth cities (dec choice)))))
 
 ;; ---- ALLERGY PROFILE SELECTION ----
 
 (defn select-allergy-profile []
-  (println "\nSelect your allergens (enter numbers separated by space, 0 for none):")
+  (println "\nSelect your allergens:")
+  (println "(enter numbers separated by space, or 0 for none)")
   (println "")
   (let [indexed (map-indexed vector (keys allergens/allergen-info))]
     (doseq [[i species] indexed]
       (let [info (get allergens/allergen-info species)]
         (println (str (inc i) ". "
                       (:name-sr info)
-                      " (" (:name-en info) ")"
+                      " / " (:name-en info)
                       " — " (allergens/potency-label (:potency info))
                       " — " (:season info)))))
     (println "\n0. No allergies")
@@ -55,7 +58,8 @@
     (let [input (read-line)
           nums  (if (= input "0")
                   []
-                  (map #(Integer/parseInt %) (clojure.string/split input #"\s+")))]
+                  (map #(Integer/parseInt %)
+                       (clojure.string/split (clojure.string/trim input) #"\s+")))]
       (mapv (fn [n] (first (nth indexed (dec n)))) nums))))
 
 ;; ---- REGISTER ----
@@ -93,11 +97,11 @@
     (println "0. Exit")
     (case (read-int "\n> " #{0 1 2})
       1 (let [user (login)]
-          (if user
-            user
-            (recur)))
+          (if user user (recur)))
       2 (register)
       0 (do (println "Goodbye!") (System/exit 0)))))
+
+;; ---- POLLEN DISPLAY ----
 
 (defn pollen-level [value]
   (cond
@@ -109,7 +113,8 @@
 
 (defn show-today-pollen [user]
   (println "\n======================================")
-  (println (str "  TODAY'S POLLEN — " (:city user)))
+  (println (str "  TODAY'S POLLEN — "
+                (get model/city-api->display (:city user) (:city user))))
   (println "======================================")
   (let [entry (api/get-latest-pollen (:city user))]
     (if (nil? entry)
@@ -130,16 +135,19 @@
         (println "")
         (println "Your allergens:")
         (doseq [allergen (:allergy-profile user)]
-          (let [value (get entry allergen 0)]
-            (println (str "  " (name allergen) ": "
-                          value " → " (pollen-level value)))))))))
+          (let [value  (get entry allergen 0)
+                info   (get allergens/allergen-info allergen)]
+            (println (str "  " (:name-en info) ": "
+                          value " -> " (pollen-level value)))))))))
 
 ;; ---- MAIN MENU ----
 
 (defn main-menu [user]
   (loop []
     (println (str "\n======================================"))
-    (println (str "  POLLENCAST | " (:city user) " | " (:username user)))
+    (println (str "  POLLENCAST | "
+                  (get model/city-api->display (:city user) (:city user))
+                  " | " (:username user)))
     (println "======================================")
     (println "1. Today's pollen levels")
     (println "2. 7-day forecast")

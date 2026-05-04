@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Created-By: Leiningen 2.12.0
+Built-By: dragan
+Build-Jdk: 25.0.2
+Leiningen-Project-ArtifactId: deep-diamond-base
+Leiningen-Project-GroupId: org.uncomplicate
+Leiningen-Project-Version: 0.43.0
+Main-Class: clojure.main
+
