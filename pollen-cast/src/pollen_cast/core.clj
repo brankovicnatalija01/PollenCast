@@ -48,7 +48,7 @@
     (println "Ready!" result))
   (System/exit 0))
 
-(defn -main []
+#_(defn -main []
   (cli/print-header)
   (let [user (cli/auth-menu)]
     (when user
@@ -61,4 +61,9 @@
     (println "Model trained!"))
   (System/exit 0))
 
-
+(defn -main []
+  (doseq [city ["КРАЉЕВО" "ЧАЧАК"]]
+    (println (str "\n=== Training: " city " ==="))
+    (train/train-model! city 2000))
+  (println "Batch 1 done!")
+  (System/exit 0))
