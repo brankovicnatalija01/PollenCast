@@ -1,5 +1,5 @@
 (ns pollen-cast.api
-  (:require [clj-http.client :as client ]))
+  (:require [clj-http.client :as client]))
 
 (def base-url "http://77.46.150.200")
 
@@ -22,11 +22,12 @@
   (let [all-data (get-pollen-by-year year)]
     (filter #(= (:location %) location-name) all-data)))
 
-(defn get-recent-pollen [location-name]
-  (let [current-year 2026
-data (get-pollen-for-location current-year location-name)]
-    (take-last 7 data)))
+;; Get last 14 days for a location (for prediction input)
+(defn get-last-14-days [location-name]
+  (let [current-year (.getYear (java.time.LocalDate/now))
+        data (get-pollen-for-location current-year location-name)]
+    (vec (take-last 14 data))))
 
 (defn get-latest-pollen [location-name]
-  (last (get-recent-pollen location-name)))
-
+  (let [current-year (.getYear (java.time.LocalDate/now))]
+    (last (get-pollen-for-location current-year location-name))))
