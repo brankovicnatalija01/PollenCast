@@ -1,11 +1,9 @@
 (ns pollen-cast.advice
-  (:require [pollen-cast.api :as api]
-            [pollen-cast.preprocess :as prep]
+  (:require [pollen-cast.preprocess :as prep]
             [pollen-cast.allergens :as allergens]
             [pollen-cast.model :as model]
             [pollen-cast.forecast :as forecast]))
 
-;; Potency weight from allergens table
 (defn potency-weight [potency]
   (case potency
     :very-high        5.0
@@ -17,7 +15,6 @@
     :very-low         0.5
     1.0))
 
-;; SEPA thresholds - Ambrosia has lower threshold (30) rest is 60/100
 (defn pollen-category [value potency]
   (let [low-threshold (if (= potency :very-high) 30.0 60.0)]
     (cond
@@ -26,20 +23,21 @@
       (> value 0.0)   :low
       :else           :none)))
 
-;; Combined risk: pollen category × allergen potency
 (defn individual-risk [value potency]
-  (let [category (pollen-category value potency)
-        weight   (potency-weight potency)]
-    (case category
-      :high   (cond (>= weight 4.0) :very-high
-                    (>= weight 2.0) :high
-                    :else           :medium)
-      :medium (cond (>= weight 4.0) :high
-                    (>= weight 2.0) :medium
-                    :else           :low)
-      :low    (cond (>= weight 4.0) :medium
-                    :else           :low)
-      :none   :none)))
+  (if (< value 1.0)
+    :none
+    (let [category (pollen-category value potency)
+          weight   (potency-weight potency)]
+      (case category
+        :high   (cond (>= weight 4.0) :very-high
+                      (>= weight 2.0) :high
+                      :else           :medium)
+        :medium (cond (>= weight 4.0) :high
+                      (>= weight 2.0) :medium
+                      :else           :low)
+        :low    (cond (>= weight 4.0) :medium
+                      :else           :low)
+        :none   :none))))
 
 (defn risk-rank [level]
   (case level
@@ -94,25 +92,22 @@
   (println (str "  SHOULD I GO OUTSIDE? — "
                 (get model/city-api->display (:city user) (:city user))))
   (println "======================================")
-  (let [forecast (forecast/get-forecast (:city user))]
-    (if (nil? forecast)
+  (let [fc (forecast/get-forecast (:city user))]
+    (if (nil? fc)
       (println "Forecast unavailable.")
-      (let [;; Calculate lag between today and last measurement
-            last-date  (:date (first forecast))
-            today      (str (java.time.LocalDate/now))
-            formatter  (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd")
-            last-ld    (java.time.LocalDate/parse last-date formatter)
-            today-ld   (java.time.LocalDate/parse today formatter)
-            lag        (.between java.time.temporal.ChronoUnit/DAYS last-ld today-ld)
-            ;; lag=1 means first forecast day is tomorrow, so index = lag-1
-            idx        (int (min (max (dec lag) 0) 6))
-            day        (nth forecast idx)
+      (let [formatter  (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd")
+            first-ld   (java.time.LocalDate/parse (:date (first fc)) formatter)
+            last-meas  (.minusDays first-ld 1)
+            today-ld   (java.time.LocalDate/now)
+            lag        (.between java.time.temporal.ChronoUnit/DAYS last-meas today-ld)
+            idx        (int (min (max (dec lag) 0) 20))
+            day        (nth fc idx)
             date       (:date day)
             values     (:values day)
             entry      (zipmap prep/pollen-species values)
             profile    (:allergy-profile user)]
         (println (str "\nForecast for: " date
-                      (when (> lag 7) " (max available)")))
+                      (when (> lag 21) " (max available)")))
         (if (empty? profile)
           (do
             (println "\nNo allergy profile set.")

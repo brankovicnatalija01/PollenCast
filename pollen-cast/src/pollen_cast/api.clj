@@ -28,6 +28,12 @@
         data (get-pollen-for-location current-year location-name)]
     (vec (take-last 14 data))))
 
+;; Get last 30 days for a location (for prediction input)
+(defn get-last-30-days [location-name]
+  (let [current-year (.getYear (java.time.LocalDate/now))
+        data (get-pollen-for-location current-year location-name)]
+    (vec (take-last 30 data))))
+
 (defn get-latest-pollen [location-name]
   (let [current-year (.getYear (java.time.LocalDate/now))]
     (last (get-pollen-for-location current-year location-name))))

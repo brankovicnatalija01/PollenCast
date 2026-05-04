@@ -55,3 +55,10 @@
       (cli/main-menu user)))
   (System/exit 0))
 
+#_(defn -main []
+  (println "Training new 30-day input, 21-day output model...")
+  (let [net (train/train-model! "НИШ" 2000)]
+    (println "Model trained!"))
+  (System/exit 0))
+
+

@@ -20,13 +20,13 @@
 (defn pollen-level [value]
   (cond
     (< value 10)  "LOW"
-    (< value 50)  "MEDIUM"
+    (< value 60)  "MEDIUM"
     (< value 100) "HIGH"
     :else         "VERY HIGH"))
 
 (defn prepare-input [city]
-  (let [raw-data (api/get-last-14-days city)]
-    (when (= 14 (count raw-data))
+  (let [raw-data (api/get-last-30-days city)]
+    (when (= 30 (count raw-data))
       (let [stats     @prep/stats
             mean      (:mean stats)
             std       (:std stats)
@@ -47,7 +47,7 @@
 (defn parse-predictions [raw-result last-date stats]
   (let [mean  (double (:mean stats))
         std   (double (:std stats))
-        dates (prep/next-dates last-date 7)]
+        dates (prep/next-dates last-date 21)]
     (mapv (fn [day]
             (let [offset (* day 26)
                   values (mapv (fn [species-idx]
@@ -58,7 +58,7 @@
                                (range 26))]
               {:date   (nth dates day)
                :values values}))
-          (range 7))))
+          (range 21))))
 
 (defn get-forecast [city]
   (let [net (get-model city)]
@@ -80,38 +80,50 @@
   (println "======================================")
   (if-let [forecast (get-forecast city)]
     (do
-      (doseq [{:keys [date values]} forecast]
-        (println (str "\n  " date))
-        (println (apply str (repeat 55 "-")))
-        (let [nonzero (filter (fn [[_ val]] (> val 5.0))
-                              (map-indexed vector values))]
-          (if (empty? nonzero)
-            (println "  No significant pollen expected.")
-            (doseq [[idx val] (sort-by second > nonzero)]
-              (let [species (nth prep/pollen-species idx)
-                    info    (get allergens/allergen-info species)]
-                (if info
+      ;; Calculate which day corresponds to today
+      (let [first-date (:date (first forecast))
+            today      (str (java.time.LocalDate/now))
+            formatter  (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd")
+            first-ld   (java.time.LocalDate/parse first-date formatter)
+            today-ld   (java.time.LocalDate/parse today formatter)
+            lag        (int (.between java.time.temporal.ChronoUnit/DAYS
+                                      first-ld today-ld))
+            ;; Start from today, show 7 days
+            start-idx  (min (max lag 0) 14)
+            end-idx    (min (+ start-idx 7) 21)
+            week       (subvec (vec forecast) start-idx end-idx)]
+        (doseq [{:keys [date values]} week]
+          (println (str "\n  " date))
+          (println (apply str (repeat 55 "-")))
+          (let [nonzero (filter (fn [[_ val]] (> val 5.0))
+                                (map-indexed vector values))]
+            (if (empty? nonzero)
+              (println "  No significant pollen expected.")
+              (doseq [[idx val] (sort-by second > nonzero)]
+                (let [species (nth prep/pollen-species idx)
+                      info    (get allergens/allergen-info species)]
+                  (if info
+                    (println (format "  %-25s | %-20s %6.1f  %s"
+                                     (:name-en info) (:name-sr info)
+                                     val (pollen-level val)))
+                    (println (format "  %-48s %6.1f  %s"
+                                     (name species) val (pollen-level val))))))))
+          (when (seq allergy-profile)
+            (println "  --- Your allergens ---")
+            (let [allergen-data (for [allergen allergy-profile]
+                                  (let [allergen-kw (if (keyword? allergen)
+                                                      allergen
+                                                      (keyword (name allergen)))
+                                        idx  (first (keep-indexed
+                                                      (fn [i s] (when (= s allergen-kw) i))
+                                                      prep/pollen-species))
+                                        val  (if idx (nth values idx) 0.0)
+                                        info (get allergens/allergen-info allergen-kw)]
+                                    {:info info :val val}))
+                  sorted (sort-by :val > allergen-data)]
+              (doseq [{:keys [info val]} sorted]
+                (when info
                   (println (format "  %-25s | %-20s %6.1f  %s"
                                    (:name-en info) (:name-sr info)
-                                   val (pollen-level val)))
-                  (println (format "  %-48s %6.1f  %s"
-                                   (name species) val (pollen-level val))))))))
-        (when (seq allergy-profile)
-          (println "  --- Your allergens ---")
-          (let [allergen-data (for [allergen allergy-profile]
-                                (let [allergen-kw (if (keyword? allergen)
-                                                    allergen
-                                                    (keyword (name allergen)))
-                                      idx  (first (keep-indexed
-                                                    (fn [i s] (when (= s allergen-kw) i))
-                                                    prep/pollen-species))
-                                      val  (if idx (nth values idx) 0.0)
-                                      info (get allergens/allergen-info allergen-kw)]
-                                  {:info info :val val}))
-                sorted (sort-by :val > allergen-data)]
-            (doseq [{:keys [info val]} sorted]
-              (when info
-                (println (format "  %-25s | %-20s %6.1f  %s"
-                                 (:name-en info) (:name-sr info)
-                                 val (pollen-level val)))))))))
-    (println "Forecast unavailable.")))
+                                   val (pollen-level val)))))))))
+    (println "Forecast unavailable."))))

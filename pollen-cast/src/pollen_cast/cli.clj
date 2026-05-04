@@ -109,7 +109,7 @@
   (cond
     (= value 0)   "NONE"
     (< value 10)  "LOW"
-    (< value 50)  "MEDIUM"
+    (< value 60)  "MEDIUM"
     (< value 100) "HIGH"
     :else         "VERY HIGH"))
 

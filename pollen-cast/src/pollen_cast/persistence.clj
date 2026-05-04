@@ -10,18 +10,26 @@
 
 (def models-dir "models")
 
-(defn model-path [city]
-  (str models-dir "/"
-       (clojure.string/replace city " " "_")
-       ".bin"))
+(defn model-path
+  ([city] (model-path city ""))
+  ([city suffix]
+   (str models-dir "/"
+        (clojure.string/replace city " " "_")
+        suffix
+        ".bin")))
 
-(defn stats-path [city]
-  (str models-dir "/"
-       (clojure.string/replace city " " "_")
-       "_stats.edn"))
+(defn stats-path
+  ([city] (stats-path city ""))
+  ([city suffix]
+   (str models-dir "/"
+        (clojure.string/replace city " " "_")
+        suffix
+        "_stats.edn")))
 
-(defn model-exists? [city]
-  (.exists (io/file (model-path city))))
+(defn model-exists?
+  ([city] (model-exists? city ""))
+  ([city suffix]
+   (.exists (io/file (model-path city suffix)))))
 
 (defn open-channel-rw [path]
   (FileChannel/open
@@ -40,21 +48,25 @@
                  StandardOpenOption/CREATE
                  StandardOpenOption/TRUNCATE_EXISTING])))
 
-(defn save-model! [net city]
-  (io/make-parents (model-path city))
-  (spit (stats-path city) (pr-str @prep/stats))
-  (with-open [ch (open-channel-new (model-path city))]
-    (transfer! net ch))
-  (println (str "Model saved: " (model-path city))))
+(defn save-model!
+  ([net city] (save-model! net city ""))
+  ([net city suffix]
+   (io/make-parents (model-path city suffix))
+   (spit (stats-path city suffix) (pr-str @prep/stats))
+   (with-open [ch (open-channel-new (model-path city suffix))]
+     (transfer! net ch))
+   (println (str "Model saved: " (model-path city suffix)))))
 
-(defn load-model! [city]
-  (when (model-exists? city)
-    (println (str "Loading model for " city "..."))
-    (let [stats (read-string (slurp (stats-path city)))]
-      (reset! prep/stats stats))
-    (let [net-bp (model/create-network)
-          net    (init! (net-bp :adam))]
-      (with-open [ch (open-channel-rw (model-path city))]
-        (transfer! ch net))
-      (println (str "Model loaded for " city))
-      net)))
+(defn load-model!
+  ([city] (load-model! city ""))
+  ([city suffix]
+   (when (model-exists? city suffix)
+     (println (str "Loading model for " city "..."))
+     (let [stats (read-string (slurp (stats-path city suffix)))]
+       (reset! prep/stats stats))
+     (let [net-bp (model/create-network)
+           net    (init! (net-bp :adam))]
+       (with-open [ch (open-channel-rw (model-path city suffix))]
+         (transfer! ch net))
+       (println (str "Model loaded for " city))
+       net))))

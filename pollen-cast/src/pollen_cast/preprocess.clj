@@ -106,21 +106,21 @@
                   (.getMonthValue))]
     (and (>= month 3) (<= month 10))))
 
-(defn prepare-training-data [location]
-  (let [data    (load-training-data location)
-        active  (vec (filter active-season? data))
-        ;; Compute stats from raw pollen values
-        s       (compute-stats active)
-        _       (reset! stats s)
-        _       (println (str "Stats - mean: " (format "%.4f" (double (:mean s)))
-                              " std: " (format "%.4f" (double (:std s)))))
-        ;; Normalize all records
-        normed  (mapv #(normalize-record % (:mean s) (:std s)) active)
-        windows (create-windows normed 14 7)]
-    (println (str "Active season records: " (count active)))
-    (println (str "Prepared " (count windows)
-                  " training windows for " location))
-    windows))
+(defn prepare-training-data
+  ([location] (prepare-training-data location 30 21))
+  ([location window-size pred-size]
+   (let [data    (load-training-data location)
+         active  (vec (filter active-season? data))
+         s       (compute-stats active)
+         _       (reset! stats s)
+         _       (println (str "Stats - mean: " (format "%.4f" (double (:mean s)))
+                               " std: " (format "%.4f" (double (:std s)))))
+         normed  (mapv #(normalize-record % (:mean s) (:std s)) active)
+         windows (create-windows normed window-size pred-size)]
+     (println (str "Active season records: " (count active)))
+     (println (str "Prepared " (count windows)
+                   " training windows for " location))
+     windows)))
 
 ;; Generate next n dates after a given date string
 (defn next-dates [last-date n]
