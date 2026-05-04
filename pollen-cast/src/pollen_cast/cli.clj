@@ -4,7 +4,8 @@
             [pollen-cast.allergens :as allergens]
             [pollen-cast.model :as model]
             [pollen-cast.forecast :as forecast]
-            [pollen-cast.preprocess :as prep]))
+            [pollen-cast.preprocess :as prep]
+            [pollen-cast.advice :as advice]))
 
 ;; ---- HELPERS ----
 
@@ -175,7 +176,7 @@
     (case (read-int "\n> " #{0 1 2 3 4 5 6})
       1 (do (show-today-pollen user) (recur))
       2 (do (forecast/show-forecast (:city user) (:allergy-profile user)) (recur))
-      3 (do (println "Coming soon...") (recur))
+      3 (do (advice/show-advice user) (recur))
       4 (do (println "Coming soon...") (recur))
       5 (do (println "Coming soon...") (recur))
       6 (do (println "Coming soon...") (recur))
