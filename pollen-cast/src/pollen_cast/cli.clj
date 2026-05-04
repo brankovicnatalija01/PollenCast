@@ -2,13 +2,15 @@
   (:require [pollen-cast.data :as data]
             [pollen-cast.api :as api]
             [pollen-cast.allergens :as allergens]
-            [pollen-cast.model :as model]))
+            [pollen-cast.model :as model]
+            [pollen-cast.forecast :as forecast]
+            [pollen-cast.preprocess :as prep]))
 
 ;; ---- HELPERS ----
 
 (defn print-header []
   (println "======================================")
-  (println "         POLLENCAST v1.0")
+  (println "         POLLENCAST v1.01")
   (println "   Pollen Forecast Monitor for Serbia")
   (println "======================================"))
 
@@ -44,14 +46,11 @@
   (println "\nSelect your allergens:")
   (println "(enter numbers separated by space, or 0 for none)")
   (println "")
-  (let [indexed (map-indexed vector (keys allergens/allergen-info))]
+  (let [species-list (vec (keys allergens/allergen-info))
+        indexed      (map-indexed vector species-list)]
     (doseq [[i species] indexed]
       (let [info (get allergens/allergen-info species)]
-        (println (str (inc i) ". "
-                      (:name-sr info)
-                      " / " (:name-en info)
-                      " — " (allergens/potency-label (:potency info))
-                      " — " (:season info)))))
+        (println (str (inc i) ". " (:name-en info) " | " (:name-sr info)))))
     (println "\n0. No allergies")
     (print "\n> ")
     (flush)
@@ -60,21 +59,22 @@
                   []
                   (map #(Integer/parseInt %)
                        (clojure.string/split (clojure.string/trim input) #"\s+")))]
-      (mapv (fn [n] (first (nth indexed (dec n)))) nums))))
+      ;; Return keywords, not indices!
+      (mapv (fn [n] (nth species-list (dec n))) nums))))
 
 ;; ---- REGISTER ----
 
 (defn register []
   (println "\n--- REGISTER ---")
-  (let [username (get-input "Choose a username: ")
-        _        (when (data/get-user username)
-                   (println "Username already exists!")
-                   (System/exit 1))
-        city     (select-city)
-        profile  (select-allergy-profile)]
-    (data/create-user! username city profile)
-    (println (str "\nWelcome, " username "! Your account has been created."))
-    (data/get-user username)))
+  (let [username (get-input "Choose a username: ")]
+    (if (data/get-user username)
+      (do (println "Username already exists! Please try a different username.")
+          nil)
+      (let [city    (select-city)
+            profile (select-allergy-profile)]
+        (data/create-user! username city profile)
+        (println (str "\nWelcome, " username "! Your account has been created."))
+        (data/get-user username)))))
 
 ;; ---- LOGIN ----
 
@@ -98,7 +98,8 @@
     (case (read-int "\n> " #{0 1 2})
       1 (let [user (login)]
           (if user user (recur)))
-      2 (register)
+      2 (let [user (register)]
+          (if user user (recur)))
       0 (do (println "Goodbye!") (System/exit 0)))))
 
 ;; ---- POLLEN DISPLAY ----
@@ -122,24 +123,39 @@
       (do
         (println (str "Last measurement: " (:date entry)))
         (println "")
-        (println (format "%-20s %-8s %s" "Species" "Value" "Level"))
-        (println (apply str (repeat 45 "-")))
-        (doseq [species [:POACEAE :AMBROSIA :BETULA :URTICACEAE
-                         :ALNUS :CORYLUS :FRAXINUS :QUERCUS]]
-          (let [value (get entry species 0)]
-            (when (> value 0)
-              (println (format "%-20s %-8s %s"
-                               (name species)
-                               value
-                               (pollen-level value))))))
+        (println (format "%-25s   %-20s %-8s %s" "Species (EN)" "Species (SR)" "Value" "Level"))
+        (println (apply str (repeat 65 "-")))
+        (let [all-species (filter (fn [species]
+                                    (> (get entry species 0) 0))
+                                  prep/pollen-species)
+              sorted      (sort-by #(get entry % 0) > all-species)]
+          (if (empty? sorted)
+            (println "No pollen detected today.")
+            (doseq [species sorted]
+              (let [value (get entry species 0)
+                    info  (get allergens/allergen-info species)]
+                (if info
+                  (println (format "%-25s | %-20s %-8s %s"
+                                   (:name-en info) (:name-sr info)
+                                   value (pollen-level value)))
+                  (println (format "%-48s %-8s %s"
+                                   (name species) value (pollen-level value))))))))
         (println "")
         (println "Your allergens:")
-        (doseq [allergen (:allergy-profile user)]
-          (let [value  (get entry allergen 0)
-                info   (get allergens/allergen-info allergen)]
-            (println (str "  " (:name-en info) ": "
-                          value " -> " (pollen-level value)))))))))
-
+        (println (apply str (repeat 65 "-")))
+        (let [allergen-data (for [allergen (:allergy-profile user)]
+                              (let [allergen-kw (if (keyword? allergen)
+                                                  allergen
+                                                  (keyword (name allergen)))
+                                    value (get entry allergen-kw 0)
+                                    info  (get allergens/allergen-info allergen-kw)]
+                                {:info info :value value}))
+              sorted (sort-by :value > allergen-data)]
+          (doseq [{:keys [info value]} sorted]
+            (when info
+              (println (format "%-25s | %-20s %-8s %s"
+                               (:name-en info) (:name-sr info)
+                               value (pollen-level value))))))))))
 ;; ---- MAIN MENU ----
 
 (defn main-menu [user]
@@ -158,7 +174,7 @@
     (println "0. Exit")
     (case (read-int "\n> " #{0 1 2 3 4 5 6})
       1 (do (show-today-pollen user) (recur))
-      2 (do (println "Coming soon...") (recur))
+      2 (do (forecast/show-forecast (:city user) (:allergy-profile user)) (recur))
       3 (do (println "Coming soon...") (recur))
       4 (do (println "Coming soon...") (recur))
       5 (do (println "Coming soon...") (recur))

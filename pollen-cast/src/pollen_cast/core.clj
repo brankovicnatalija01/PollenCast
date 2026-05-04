@@ -3,6 +3,7 @@
   (:require [pollen-cast.cli :as cli]
             [pollen-cast.api :as api]
             [pollen-cast.preprocess :as prep]
+            [pollen-cast.data :as data]
             [pollen-cast.model :as model]
             [pollen-cast.train :as train] [pollen-cast.persistence :as persist]
             [uncomplicate.diamond.dnn :refer [infer!]]
@@ -37,7 +38,7 @@
     (println "Model trained!"))
   (System/exit 0))
 
-(defn -main []
+#_(defn -main []
   (let [city "НИШ"
         result (if (persist/model-exists? city)
                  (do (println "Model found, loading...")
@@ -46,3 +47,11 @@
                      (train/train-model! city 2000)))]
     (println "Ready!" result))
   (System/exit 0))
+
+(defn -main []
+  (cli/print-header)
+  (let [user (cli/auth-menu)]
+    (when user
+      (cli/main-menu user)))
+  (System/exit 0))
+
