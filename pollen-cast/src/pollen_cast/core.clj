@@ -1,6 +1,7 @@
 (ns pollen-cast.core
   (:gen-class)
   (:require [pollen-cast.cli :as cli]
+            [pollen-cast.api :as api]
             [pollen-cast.preprocess :as prep]
             [pollen-cast.model :as model]
             [pollen-cast.train :as train]
@@ -31,13 +32,14 @@
                                          (count nonzero)))))
   (System/exit 0))
 
-
 #_(defn -main []
-  (let [net (train/train-model! "НИШ" 50)]
+  (let [net (train/train-model! "НИШ" 2000)]
     (println "Model trained!"))
   (System/exit 0))
 
 (defn -main []
-  (let [net (train/train-model! "НИШ" 2000)]
-    (println "Model trained!"))
+  (let [locations (map :name (api/get-locations))]
+    (doseq [loc (take 30 locations)]
+      (let [data (prep/load-training-data loc)]
+        (println (str loc ": " (count data) " records")))))
   (System/exit 0))

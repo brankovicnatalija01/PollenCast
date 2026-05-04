@@ -39,18 +39,24 @@
 ;; ---- ALLERGY PROFILE SELECTION ----
 
 (defn select-allergy-profile []
-  (println "\nSelect your allergy profile:")
-  (println "1. No allergies")
-  (println "2. Allergic to grass (POACEAE)")
-  (println "3. Allergic to ambrosia (AMBROSIA)")
-  (println "4. Allergic to birch (BETULA)")
-  (println "5. Multiple - high allergenicity plants")
-  (case (read-int "\n> " #{1 2 3 4 5})
-    1 []
-    2 [:POACEAE]
-    3 [:AMBROSIA]
-    4 [:BETULA]
-    5 [:POACEAE :AMBROSIA :BETULA :URTICACEAE :ALNUS]))
+  (println "\nSelect your allergens (enter numbers separated by space, 0 for none):")
+  (println "")
+  (let [indexed (map-indexed vector (keys allergens/allergen-info))]
+    (doseq [[i species] indexed]
+      (let [info (get allergens/allergen-info species)]
+        (println (str (inc i) ". "
+                      (:name-sr info)
+                      " (" (:name-en info) ")"
+                      " — " (allergens/potency-label (:potency info))
+                      " — " (:season info)))))
+    (println "\n0. No allergies")
+    (print "\n> ")
+    (flush)
+    (let [input (read-line)
+          nums  (if (= input "0")
+                  []
+                  (map #(Integer/parseInt %) (clojure.string/split input #"\s+")))]
+      (mapv (fn [n] (first (nth indexed (dec n)))) nums))))
 
 ;; ---- REGISTER ----
 
