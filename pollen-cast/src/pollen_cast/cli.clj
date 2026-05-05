@@ -7,14 +7,15 @@
             [pollen-cast.preprocess :as prep]
             [pollen-cast.advice :as advice]
             [pollen-cast.cities :as cities]
-            [pollen-cast.calendar :as calendar]
+            [pollen-cast.calendar :as calendar] 
+            [clojure.string :as str]
             [pollen-cast.allergen-info :as allergen-info]))
 
 ;; ---- HELPERS ----
 
 (defn print-header []
   (println "======================================")
-  (println "         POLLENCAST v1.01")
+  (println "         POLLENCAST ")
   (println "   Pollen Forecast Monitor for Serbia")
   (println "======================================"))
 
@@ -62,7 +63,7 @@
           nums  (if (= input "0")
                   []
                   (map #(Integer/parseInt %)
-                       (clojure.string/split (clojure.string/trim input) #"\s+")))]
+                       (str/split (str/trim input) #"\s+")))]
       ;; Return keywords, not indices!
       (mapv (fn [n] (nth species-list (dec n))) nums))))
 
@@ -183,7 +184,7 @@
 
 (defn main-menu [user]
   (loop [user user]
-    (println (str "\n======================================"))
+    (println "\n======================================")
     (println (str "  POLLENCAST | "
                   (get model/city-api->display (:city user) (:city user))
                   " | " (:username user)))
@@ -195,8 +196,9 @@
     (println "5. My allergy calendar")
     (println "6. Allergen information")
     (println "7. Edit profile")
+    (println "8. Logout")
     (println "0. Exit")
-    (case (read-int "\n> " #{0 1 2 3 4 5 6})
+    (case (read-int "\n> " #{0 1 2 3 4 5 6 7 8})
       1 (do (show-today-pollen user) (recur user))
       2 (do (forecast/show-forecast (:city user) (:allergy-profile user)) (recur user))
       3 (do (advice/show-advice user) (recur user))
@@ -204,4 +206,5 @@
       5 (do (calendar/show-calendar user) (recur user))
       6 (do (allergen-info/show-allergen-info user) (recur user))
       7 (recur (edit-profile user))
-      0 (println "Goodbye!"))))
+      8 (do (println "\nLogged out successfully!") nil)
+      0 (do (println "Goodbye!") (System/exit 0)))))

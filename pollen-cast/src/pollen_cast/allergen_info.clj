@@ -1,6 +1,6 @@
 (ns pollen-cast.allergen-info
   (:require [pollen-cast.allergens :as allergens]
-            [pollen-cast.model :as model]))
+            [clojure.string :as str]))
 
 (def allergen-descriptions
   {:AMBROSIA      {:description "Ragweed is one of the most allergenic plants in Serbia and Europe. It produces large amounts of highly allergenic pollen that can travel hundreds of kilometers. Serbia is one of the invasion hotspots in Europe alongside Hungary and Croatia."
@@ -93,7 +93,7 @@
     :very-low         "🟢 Very Low"
     "⚪ Unknown"))
 
-(defn show-allergen-info [user]
+(defn show-allergen-info [_]
   (println "\n======================================")
   (println "  ALLERGEN INFORMATION")
   (println "======================================")

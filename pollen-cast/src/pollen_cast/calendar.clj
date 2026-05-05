@@ -1,6 +1,6 @@
 (ns pollen-cast.calendar
   (:require [pollen-cast.allergens :as allergens]
-            [pollen-cast.model :as model]))
+            [clojure.string :as str]))
 
 (def months
   {1  "January"   2  "February"  3  "March"
