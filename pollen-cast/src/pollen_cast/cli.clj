@@ -5,7 +5,8 @@
             [pollen-cast.model :as model]
             [pollen-cast.forecast :as forecast]
             [pollen-cast.preprocess :as prep]
-            [pollen-cast.advice :as advice]))
+            [pollen-cast.advice :as advice]
+            [pollen-cast.cities :as cities]))
 
 ;; ---- HELPERS ----
 
@@ -196,7 +197,7 @@
       1 (do (show-today-pollen user) (recur user))
       2 (do (forecast/show-forecast (:city user) (:allergy-profile user)) (recur user))
       3 (do (advice/show-advice user) (recur user))
-      4 (do (println "Coming soon...") (recur user))
+      4 (do (cities/show-top5-lowest user) (recur user))
       5 (do (println "Coming soon...") (recur user))
       6 (recur (edit-profile user))
       0 (println "Goodbye!"))))
