@@ -157,10 +157,29 @@
               (println (format "%-25s | %-20s %-8s %s"
                                (:name-en info) (:name-sr info)
                                value (pollen-level value))))))))))
+;; ---- EDIT PROFILE ----
+
+(defn edit-profile [user]
+  (println "\n--- EDIT PROFILE ---")
+  (println "1. Change city")
+  (println "2. Change allergy profile")
+  (println "0. Back")
+  (case (read-int "\n> " #{0 1 2})
+    1 (let [new-city (select-city)]
+        (data/update-user! (:username user) {:city new-city})
+        (println (str "\nCity updated to: "
+                      (get model/city-api->display new-city new-city)))
+        (assoc user :city new-city))
+    2 (let [new-profile (select-allergy-profile)]
+        (data/update-user! (:username user) {:allergy-profile new-profile})
+        (println "\nAllergy profile updated!")
+        (assoc user :allergy-profile new-profile))
+    0 user))
+
 ;; ---- MAIN MENU ----
 
 (defn main-menu [user]
-  (loop []
+  (loop [user user]
     (println (str "\n======================================"))
     (println (str "  POLLENCAST | "
                   (get model/city-api->display (:city user) (:city user))
@@ -174,10 +193,10 @@
     (println "6. Edit profile")
     (println "0. Exit")
     (case (read-int "\n> " #{0 1 2 3 4 5 6})
-      1 (do (show-today-pollen user) (recur))
-      2 (do (forecast/show-forecast (:city user) (:allergy-profile user)) (recur))
-      3 (do (advice/show-advice user) (recur))
-      4 (do (println "Coming soon...") (recur))
-      5 (do (println "Coming soon...") (recur))
-      6 (do (println "Coming soon...") (recur))
+      1 (do (show-today-pollen user) (recur user))
+      2 (do (forecast/show-forecast (:city user) (:allergy-profile user)) (recur user))
+      3 (do (advice/show-advice user) (recur user))
+      4 (do (println "Coming soon...") (recur user))
+      5 (do (println "Coming soon...") (recur user))
+      6 (recur (edit-profile user))
       0 (println "Goodbye!"))))
