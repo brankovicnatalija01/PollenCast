@@ -24,7 +24,7 @@
       :else           :none)))
 
 (defn individual-risk [value potency]
-  (if (< value 1.0)
+  (if (< value 0.1)
     :none
     (let [category (pollen-category value potency)
           weight   (potency-weight potency)]

@@ -19,10 +19,11 @@
 
 (defn pollen-level [value]
   (cond
-    (< value 10)  "LOW"
-    (< value 60)  "MEDIUM"
-    (< value 100) "HIGH"
-    :else         "VERY HIGH"))
+    (< value 0.1)  "NONE"
+    (< value 10)   "LOW"
+    (< value 60)   "MEDIUM"
+    (< value 100)  "HIGH"
+    :else          "VERY HIGH"))
 
 (defn prepare-input [city]
   (let [raw-data (api/get-last-30-days city)]
@@ -78,9 +79,9 @@
   (println (str "  7-DAY FORECAST — "
                 (get model/city-api->display city city)))
   (println "======================================")
-  (if-let [forecast (get-forecast city)]
-    (do
-      ;; Calculate which day corresponds to today
+  (let [forecast (get-forecast city)]
+    (if (nil? forecast)
+      (println "Forecast unavailable.")
       (let [first-date (:date (first forecast))
             today      (str (java.time.LocalDate/now))
             formatter  (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd")
@@ -88,7 +89,6 @@
             today-ld   (java.time.LocalDate/parse today formatter)
             lag        (int (.between java.time.temporal.ChronoUnit/DAYS
                                       first-ld today-ld))
-            ;; Start from today, show 7 days
             start-idx  (min (max lag 0) 14)
             end-idx    (min (+ start-idx 7) 21)
             week       (subvec (vec forecast) start-idx end-idx)]
@@ -109,6 +109,7 @@
                     (println (format "  %-48s %6.1f  %s"
                                      (name species) val (pollen-level val))))))))
           (when (seq allergy-profile)
+            (println "")
             (println "  --- Your allergens ---")
             (let [allergen-data (for [allergen allergy-profile]
                                   (let [allergen-kw (if (keyword? allergen)
@@ -125,5 +126,4 @@
                 (when info
                   (println (format "  %-25s | %-20s %6.1f  %s"
                                    (:name-en info) (:name-sr info)
-                                   val (pollen-level val)))))))))
-    (println "Forecast unavailable."))))
+                                   val (pollen-level val))))))))))))

@@ -2,21 +2,31 @@
   (:require [pollen-cast.api :as api]
             [pollen-cast.preprocess :as prep]
             [pollen-cast.allergens :as allergens]
-            [pollen-cast.model :as model]))
+            [pollen-cast.model :as model]
+            [pollen-cast.forecast :as forecast]))
 
 (defn pollen-level [value]
   (cond
-    (= value 0)   "NONE"
-    (< value 10)  "LOW"
-    (< value 60)  "MEDIUM"
-    (< value 100) "HIGH"
-    :else         "VERY HIGH"))
+    (< value 0.1)  "NONE"
+    (< value 10)   "LOW"
+    (< value 60)   "MEDIUM"
+    (< value 100)  "HIGH"
+    :else          "VERY HIGH"))
 
-(defn city-total-pollen [city]
-  (let [entry (api/get-latest-pollen city)]
-    (if (nil? entry)
+(defn city-today-pollen [city]
+  (let [fc (forecast/get-forecast city)]
+    (if (nil? fc)
       {:city city :total 0 :entry nil}
-      (let [total (reduce + (map #(get entry % 0) prep/pollen-species))]
+      (let [formatter  (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd")
+            first-ld   (java.time.LocalDate/parse (:date (first fc)) formatter)
+            last-meas  (.minusDays first-ld 1)
+            today-ld   (java.time.LocalDate/now)
+            lag        (.between java.time.temporal.ChronoUnit/DAYS last-meas today-ld)
+            idx        (int (min (max (dec lag) 0) 20))
+            today-data (nth fc idx)
+            values     (:values today-data)
+            entry      (zipmap prep/pollen-species values)
+            total      (reduce + values)]
         {:city  city
          :total total
          :entry entry}))))
@@ -27,7 +37,7 @@
   (println "======================================")
   (println "Fetching data for all cities...")
   (let [allergy-profile (:allergy-profile user)
-        city-data (mapv city-total-pollen model/supported-cities)
+        city-data (mapv city-today-pollen model/supported-cities)
         sorted    (sort-by :total city-data)
         top5      (take 5 sorted)]
     (println "")
@@ -35,7 +45,6 @@
       (println (str (inc rank) ". "
                     (get model/city-api->display city city)
                     " — Total pollen: " (format "%.0f" (double total))))
-      ;; Show user's allergens for this city
       (when (and (seq allergy-profile) (not (nil? entry)))
         (let [allergen-vals (for [allergen allergy-profile]
                               (let [allergen-kw (if (keyword? allergen)
@@ -44,10 +53,10 @@
                                     value (get entry allergen-kw 0)
                                     info  (get allergens/allergen-info allergen-kw)]
                                 {:info info :value value}))
-              with-pollen (filter #(> (:value %) 0) allergen-vals)]
+              with-pollen (filter #(> (:value %) 0.1) allergen-vals)]
           (when (seq with-pollen)
             (doseq [{:keys [info value]} (sort-by :value > with-pollen)]
-              (println (format "   %-25s %6.0f  %s"
+              (println (format "   %-25s %6.1f  %s"
                                (:name-en info) (double value)
                                (pollen-level value)))))))
       (println ""))))

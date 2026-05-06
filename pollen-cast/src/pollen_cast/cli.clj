@@ -111,7 +111,7 @@
 
 (defn pollen-level [value]
   (cond
-    (= value 0)   "NONE"
+    (< value 0.1)   "NONE"
     (< value 10)  "LOW"
     (< value 60)  "MEDIUM"
     (< value 100) "HIGH"
@@ -122,32 +122,45 @@
   (println (str "  TODAY'S POLLEN — "
                 (get model/city-api->display (:city user) (:city user))))
   (println "======================================")
-  (let [entry (api/get-latest-pollen (:city user))]
-    (if (nil? entry)
-      (println "No data available.")
-      (do
-        (println (str "Last measurement: " (:date entry)))
+  (let [latest (api/get-latest-pollen (:city user))]
+    (when latest
+      (println (str "Last measurement: " (:date latest)))))
+  (let [forecast (forecast/get-forecast (:city user))]
+    (if (nil? forecast)
+      (println "Forecast unavailable.")
+      (let [formatter  (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd")
+            first-ld   (java.time.LocalDate/parse (:date (first forecast)) formatter)
+            last-meas  (.minusDays first-ld 1)
+            today-ld   (java.time.LocalDate/now)
+            lag        (.between java.time.temporal.ChronoUnit/DAYS last-meas today-ld)
+            idx        (int (min (max (dec lag) 0) 20))
+            today-data (nth forecast idx)
+            values     (:values today-data)
+            entry      (zipmap prep/pollen-species values)]
+        (println (str "Predicted for: " (:date today-data)))
         (println "")
         (println (format "%-25s   %-20s %-8s %s" "Species (EN)" "Species (SR)" "Value" "Level"))
         (println (apply str (repeat 65 "-")))
+        ;; Show all species with value > 5
         (let [all-species (filter (fn [species]
-                                    (> (get entry species 0) 0))
+                                    (> (get entry species 0) 5.0))
                                   prep/pollen-species)
               sorted      (sort-by #(get entry % 0) > all-species)]
           (if (empty? sorted)
-            (println "No pollen detected today.")
+            (println "No significant pollen today.")
             (doseq [species sorted]
               (let [value (get entry species 0)
                     info  (get allergens/allergen-info species)]
                 (if info
-                  (println (format "%-25s | %-20s %-8s %s"
+                  (println (format "%-25s | %-20s %-8.1f %s"
                                    (:name-en info) (:name-sr info)
                                    value (pollen-level value)))
-                  (println (format "%-48s %-8s %s"
+                  (println (format "%-48s %-8.1f %s"
                                    (name species) value (pollen-level value))))))))
         (println "")
         (println "Your allergens:")
         (println (apply str (repeat 65 "-")))
+        ;; Show ALL user allergens with their values
         (let [allergen-data (for [allergen (:allergy-profile user)]
                               (let [allergen-kw (if (keyword? allergen)
                                                   allergen
@@ -158,9 +171,10 @@
               sorted (sort-by :value > allergen-data)]
           (doseq [{:keys [info value]} sorted]
             (when info
-              (println (format "%-25s | %-20s %-8s %s"
+              (println (format "%-25s | %-20s %-8.1f %s"
                                (:name-en info) (:name-sr info)
                                value (pollen-level value))))))))))
+
 ;; ---- EDIT PROFILE ----
 
 (defn edit-profile [user]
