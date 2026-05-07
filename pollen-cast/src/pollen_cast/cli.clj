@@ -64,7 +64,6 @@
                   []
                   (map #(Integer/parseInt %)
                        (str/split (str/trim input) #"\s+")))]
-      ;; Return keywords, not indices!
       (mapv (fn [n] (nth species-list (dec n))) nums))))
 
 ;; ---- REGISTER ----
@@ -111,7 +110,7 @@
 
 (defn pollen-level [value]
   (cond
-    (< value 0.1)   "NONE"
+    (< value 0.1) "NONE"
     (< value 10)  "LOW"
     (< value 60)  "MEDIUM"
     (< value 100) "HIGH"
