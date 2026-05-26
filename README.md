@@ -4,7 +4,7 @@
 
 ---
 
-## 🌟 Key Features
+## Key Features
 
 - **Real-time Monitoring:** Fetches the latest pollen data for 26 different allergens from 12 locations in Serbia.
 - **AI-Powered Forecasts:** Uses a Multilayer Perceptron (MLP) neural network to predict pollen concentrations for the next 21 days.
@@ -16,7 +16,7 @@
 
 ---
 
-## 🧠 Neural Network Architecture
+## Neural Network Architecture
 
 To overcome the delay in manual pollen measurements, PollenCast utilizes a **MLP (Multilayer Perceptron)** model:
 
@@ -28,7 +28,7 @@ To overcome the delay in manual pollen measurements, PollenCast utilizes a **MLP
 
 ---
 
-## 🛠️ Technical Stack
+## Technical Stack
 
 - **Language:** [Clojure](https://clojure.org/)
 - **Deep Learning:** [Deep Diamond](https://github.com/uncomplicate/deep-diamond) (utilizing **Intel MKL**)
@@ -38,7 +38,7 @@ To overcome the delay in manual pollen measurements, PollenCast utilizes a **MLP
 
 ---
 
-## 🚀 Use Cases
+## Use Cases
 
 1.  **Registration & Login:** Securely store your location and allergy preferences locally.
 2.  **Current Pollen Levels:** View predicted levels for today, categorized by severity (NONE, LOW, MEDIUM, HIGH, VERY HIGH).
@@ -49,7 +49,7 @@ To overcome the delay in manual pollen measurements, PollenCast utilizes a **MLP
 
 ---
 
-## 📊 Data Source
+## Data Source
 
 The application consumes Open Data from the Serbian Environmental Protection Agency via the **dat.gov.rs** platform.
 
@@ -58,7 +58,7 @@ The application consumes Open Data from the Serbian Environmental Protection Age
 
 ---
 
-## 🔧 Installation & Usage
+## Installation & Usage
 
 ### Prerequisites
 
