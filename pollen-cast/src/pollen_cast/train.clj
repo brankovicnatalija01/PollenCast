@@ -9,6 +9,8 @@
             [pollen-cast.model :as model] 
             [pollen-cast.persistence :as persist]))
 
+;; AI je korišćen kao pomoć za logiku spajanja prozora i računanje pozicija
+
 ;; Convert windows to flat float arrays for training
 (defn windows->matrices [windows]
   (let [n      (count windows)
@@ -22,6 +24,9 @@
         (doseq [[j v] (map-indexed vector flat-out)]
           (aset y-data (+ (* i model/output-size) j) (float v)))))
     {:x x-data :y y-data :n n}))
+
+;; AI je pomogao oko sintakse za alokaciju tenzora, funkcije transfer! i pokretanja train!, 
+;; dok je logika toka treniranja, podela podataka na 80/20, računanje RMSE greške i čuvanje modela definisano samostalno.
 
 (defn train-model! [location epochs]
   (println (str "Loading training data for " location "..."))
@@ -49,3 +54,4 @@
       (println "Training complete!")
       (persist/save-model! net location)
       net)))
+

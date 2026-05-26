@@ -25,6 +25,9 @@
     (< value 100)  "HIGH"
     :else          "VERY HIGH"))
 
+; AI je korišćen kao pomoć za alokaciju tenzora i upotrebu funkcije transfer!,
+;; dok su normalizacija i priprema ulaznih nizova definisani samostalno.
+
 (defn prepare-input [city]
   (let [raw-data (api/get-last-30-days city)]
     (when (= 30 (count raw-data))
@@ -61,6 +64,9 @@
                :values values}))
           (range 21))))
 
+;; AI je korišćen za sintaksnu pomoć pri pozivanju funkcije infer! i transfer!,
+;; dok su logika keširanja modela u atom i kontrola toka predikcije definisani samostalno.
+
 (defn get-forecast [city]
   (let [net (get-model city)]
     (if (nil? net)
@@ -73,6 +79,9 @@
               result   (vec raw)
               forecast (parse-predictions result (:last-date input) @prep/stats)]
           forecast)))))
+
+;; AI je pomogao oko sintakse Java Time API-ja za računanje vremenskog razmaka (laga) između datuma
+;; dok su filtriranje značajnih alergena i integracija sa korisničkim profilom definisani samostalno.
 
 (defn show-forecast [city allergy-profile]
   (println "\n======================================")

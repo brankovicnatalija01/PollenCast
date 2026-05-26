@@ -36,6 +36,8 @@
 (defn denormalize [v mean std]
   (float (+ (* v std) mean)))
 
+;; AI je korišćen kao pomoć za pisanje formula kod cikličnog kodiranja datuma.
+
 ;; Cyclic encoding for seasonal patterns
 (defn cyclic-encode [value max-value]
   [(float (Math/sin (* 2 Math/PI (/ value max-value))))
@@ -83,6 +85,8 @@
   (vec (mapcat (fn [year]
                  (load-location-year location year))
                [2019 2020 2021 2022 2023 2024])))
+
+;; AI je korišćen kao pomoć za logiku sečenja vektora i ispravno računanje indeksa kod kreiranja kliznih prozora. 
 
 ;; Create sliding windows preserving dates
 (defn create-windows [records window-size pred-size]

@@ -12,6 +12,9 @@
 (def window-size 30)
 (def pred-size 21)
 
+;; AI je korišćen za lakše razumevanje i pisanje koda za arhitekturu mreže, 
+;; dok su dimenzije, funkcije za ravnanje vektora i izbor aktivacionih funkcija definisani samostalno.
+
 (defn create-network
   ([] (create-network input-size output-size))
   ([in-size out-size]

@@ -31,6 +31,8 @@
   ([city suffix]
    (.exists (io/file (model-path city suffix)))))
 
+;; AI je pomogao oko sintakse za Java FileChannel i StandardOpenOption parametara za rad sa binarnim datotekama
+
 (defn open-channel-rw [path]
   (FileChannel/open
     (Paths/get path (into-array String []))

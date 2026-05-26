@@ -2,6 +2,9 @@
   (:require [pollen-cast.allergens :as allergens]
             [clojure.string :as str]))
 
+
+;; AI: Korišćen za popunjavanje tekstualnih opisa alergena u allergen-descriptions
+
 (def allergen-descriptions
   {:AMBROSIA      {:description "Ragweed is one of the most allergenic plants in Serbia and Europe. It produces large amounts of highly allergenic pollen that can travel hundreds of kilometers. Serbia is one of the invasion hotspots in Europe alongside Hungary and Croatia."
                    :symptoms    "Sneezing, runny nose, itchy eyes, asthma attacks, oral allergy syndrome with certain foods (celery, cucumbers, melons)"
